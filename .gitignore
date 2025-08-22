@@ -209,3 +209,5 @@ __marimo__/
 .vscode/settings.json
 Pipfile.lock
 lore_data.db
+lore.db
+Connections/query.sql

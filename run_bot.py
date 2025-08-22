@@ -8,6 +8,7 @@ import random
 from Utils import General_Utils as utility
 from Utils import Responses as responses
 from CommandTrees.Life import Life
+from Connections.DB_Connection import DatabaseConnection
 
 
 
@@ -34,8 +35,7 @@ logging.basicConfig(
 	format="%(asctime)s:%(levelname)s:%(message)s"
 )
 command_tree = discord.app_commands.CommandTree(client)
-life_module = Life(bot=client)
-command_tree.add_command(life_module)
+db_connection = DatabaseConnection(os.getenv("DB_PATH"))
 
 async def get_guild_channel_by_name(guild:discord.Guild, channel_name:str):
 	"""
@@ -101,7 +101,11 @@ async def on_ready():
 	Starts the whole application
 	'''
 	try:
-		await command_tree.sync()
+		command_tree.add_command(Life(bot=client, database=db_connection))  # Add the Life command group
+		synced_commands = await command_tree.sync()
+
+		print(f"Synced {len(synced_commands)} commands.")
+		logging.info("Synced command tree successfully.")
 	except discord.HTTPException as e:
 		print(f"Failed to sync command tree: {e}")
 		logging.error("Failed to sync command tree: %s", e)

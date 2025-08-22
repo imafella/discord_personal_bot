@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, threading
 from Utils import General_Utils as utility
 
 
@@ -7,21 +7,16 @@ from Utils import General_Utils as utility
 class DatabaseConnection:
     def __init__(self, db_name):
         self.db_name = db_name
-        self.connection = None
-        self.cursor = None
+        self.connection = sqlite3.connect(self.db_name, check_same_thread=False)
+        self.cursor = self.connection.cursor()
+        self.lock = threading.Lock()
         self.config = utility.load_json("db_config")
-        # self.setup_database()
+        self.setup_database()
 
-    def connect(self):
-        # Connect to the SQLite database (or create it if it doesn't exist)
-        if self.connection == None:
-            self.connection = sqlite3.connect(self.db_name)
-        # Create a cursor object to interact with the database
-        if self.cursor == None:
-            self.cursor = self.connection.cursor()
+    def __del__(self):
+        self.close()
 
     def close(self):
-        # Close the database connection
         if self.cursor:
             self.cursor.close()
             self.cursor = None
@@ -30,12 +25,28 @@ class DatabaseConnection:
             self.connection = None
 
 
-    # def setup_database(self):
-    #     self.connect()
-    #     # Create the tables if it doesn't exist
-    #     for script in self.config["create"].values():
-    #         self.cursor.execute(script)
-    #     # Commit the changes and close the connection
-    #     self.connection.commit()
-    #     self.close()
-    #     # Close the connection
+    def setup_database(self):
+        with self.lock:
+            for script in self.config["create"].values():
+                self.cursor.execute(script)
+            self.connection.commit()
+
+    #
+    # Life Queries
+    #
+
+    def get_life_total(self, user_id:int) -> int:
+        with self.lock:
+            self.cursor.execute(self.config['select']['select_life_totals_by_user_id'], (user_id,))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+            else:
+                self.cursor.execute(self.config['insert']['insert_life_totals_by_user_id_and_total'], (user_id, 5))
+                self.connection.commit()
+                return 5
+
+    def update_life_total(self, user_id:int, new_total:int):
+        with self.lock:
+            self.cursor.execute(self.config['update']['update_life_totals_by_user_id'], (new_total, user_id))
+            self.connection.commit()

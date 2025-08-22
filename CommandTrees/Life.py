@@ -5,17 +5,18 @@ from discord.ext import tasks
 from datetime import datetime, time, timedelta
 
 class Life(discord.app_commands.Group):
-    def __init__(self, bot:discord.Client):
+    def __init__(self, bot:discord.Client, database:DatabaseConnection):
         self.bot = bot  # Store the bot instance
-        self.database = DatabaseConnection(os.getenv("DB_PATH"))
+        self.database = database
         self.admins = json.loads(os.getenv("ALLOWED_ADMINS","[]"))
         self.target_user = int(os.getenv("life_target_user"), 0)
-        self.total = 5
+        self.total = self.database.get_life_total(user_id=self.target_user)
         super().__init__(name="life", description="Life Commands") 
         # self.daily_life_increase.start()
     
     def cog_unload(self):
         self.daily_life_increase.cancel()
+
     
     @tasks.loop(hours=1)
     async def daily_life_increase(self):
@@ -56,6 +57,7 @@ class Life(discord.app_commands.Group):
 
         self.total += amount 
         hearts = "❤️" * self.total
+        self.database.update_life_total(user_id=self.target_user, new_total=self.total)
 
         target_user = await self.bot.fetch_user(self.target_user)
         await target_user.send(content=f'''
@@ -80,6 +82,7 @@ class Life(discord.app_commands.Group):
 
         self.total -= amount 
         hearts = "❤️" * self.total
+        self.database.update_life_total(user_id=self.target_user, new_total=self.total)
 
         target_user = await self.bot.fetch_user(self.target_user)
         await target_user.send(content=f'''
@@ -97,7 +100,7 @@ class Life(discord.app_commands.Group):
         await interaction.followup.send(content="\u200b", ephemeral=True)
 
     @discord.app_commands.command(name="set", description="Set Life total to a specific value.")
-    async def decrease(self, interaction: discord.Interaction, reason:str=None, amount:int=1):
+    async def set(self, interaction: discord.Interaction, reason:str=None, amount:int=1):
         '''
         Set Life total to a specific value.
         '''
@@ -111,6 +114,7 @@ class Life(discord.app_commands.Group):
 
         self.total = amount 
         hearts = "❤️" * self.total
+        self.database.update_life_total(user_id=self.target_user, new_total=self.total)
 
         target_user = await self.bot.fetch_user(self.target_user)
         await target_user.send(content=f'''
