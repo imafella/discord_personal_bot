@@ -10,7 +10,9 @@ Bot that will host uses that are more focused on me and less on the bank.
 ## Other Scripts
 ### Env_Template_Maker
 Sick of having to update your .env_template file? Same.
+
 run: python3 Env_Template_Maker.py
+
 Bosh. New Template made that can be tracked in github.
 
 ## Iteams that are coming:
