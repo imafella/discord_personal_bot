@@ -208,3 +208,4 @@ __marimo__/
 .vscode/launch.json
 .vscode/settings.json
 Pipfile.lock
+lore_data.db

@@ -1,0 +1,16 @@
+{
+    "databases":["life_totals"],
+    "create":{
+        "create_life_totals":"CREATE TABLE IF NOT EXISTS life_totals (user_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, total INTEGER NOT NULL);"
+    },
+    "select":{
+        "select_life_totals_by_user_id":"SELECT * FROM life_totals WHERE user_id = ?;"
+    },
+    "insert":{
+        "insert_life_totals_by_user_id_and_total":"INSERT INTO life_totals (user_id, total) VALUES (?, ?);"
+    },
+    "update":{
+        "update_life_totals_by_user_id":"UPDATE life_totals SET total = ? WHERE user_id = ?;"
+    },
+    "delete":{}
+}

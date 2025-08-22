@@ -7,6 +7,8 @@ import argparse
 import random
 from Utils import General_Utils as utility
 from Utils import Responses as responses
+from CommandTrees.Life import Life
+
 
 
 #
@@ -20,6 +22,7 @@ ignore_these_user_msgs = json.loads(os.getenv("ignore_user_msgs", "[]"))
 ignore_these_user_reactions = json.loads(os.getenv("ignore_user_reactions", "[]"))
 MAIN_ID = os.getenv("ID")
 TEST_ID = os.getenv("TEST_ID")
+BOT_NAME = os.getenv("bot_name", "A Robot")
 
 
 client = discord.Client(intents=intents)
@@ -31,6 +34,8 @@ logging.basicConfig(
 	format="%(asctime)s:%(levelname)s:%(message)s"
 )
 command_tree = discord.app_commands.CommandTree(client)
+life_module = Life(bot=client)
+command_tree.add_command(life_module)
 
 async def get_guild_channel_by_name(guild:discord.Guild, channel_name:str):
 	"""
@@ -101,6 +106,8 @@ async def on_ready():
 		print(f"Failed to sync command tree: {e}")
 		logging.error("Failed to sync command tree: %s", e)
 
+	client.loop.create_task(change_presense_periodically())
+	client.loop.create_task(change_avatar_periodically())
 
 	print("Hello, I am online!")
 	print('Connected to bot: {}'.format(client.user.name))
@@ -111,22 +118,32 @@ async def on_error(event, *args, **kwargs):
 	logging.error("An error occurred in event: %s", event)
 	logging.error("Error details:\n%s", traceback.format_exc())
 
+@client.event
+async def on_message(message:discord.Message):
+	'''
+	Handles messages sent in the server.
+	'''
+	username = message.author.mention
+	if client.user in message.mentions:
+		await message.channel.send(responses.pick_mention_msg(user_name=username, bot_name=BOT_NAME))
+	
+
 #
 # General Commands
 #
 
 
 @command_tree.command(name="info",description="Info about the bot.")
-async def info(self, interaction: discord.Interaction):
+async def info(interaction: discord.Interaction):
 	msg = ""
-	for command in self.commands:
+	for command in command_tree.get_commands():
 		msg+= f"\n\n/{command.name} - {command.description}"
 	await interaction.response.send_message(content=msg)
 
 @command_tree.command(name="good_bot",description="Tell the bot it's a good bot.")
 async def good_bot(interaction: discord.Interaction):
 	username = interaction.user.mention
-	await interaction.response.send_message(content=responses.pick_good_bot_msg(username, os.getenv("bot_name", "A Robot")))
+	await interaction.response.send_message(content=responses.pick_good_bot_msg(username, BOT_NAME))
 
 
 @command_tree.command(name="test",description="Testing the latest code changes that imafella is working on. Don't call this.")

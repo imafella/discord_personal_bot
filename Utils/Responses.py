@@ -18,6 +18,23 @@ def pick_good_bot_msg(user_name:str, bot_name:str):
 
     return msg
 
+def pick_mention_msg(user_name:str, bot_name:str):
+    '''
+    Returns a random mention message from the Msg_Responses.json file.
+    args:
+        user_name (str): The name of the user to replace in the message.
+        bot_name (str): The name of the bot to replace in the message.
+    returns:
+        str: A random mention message with the user and bot names replaced.
+    '''
+
+    responses = load_json("Msg_Responses")['mention']
+    msg = random.choice(responses)
+    msg = msg.replace("[USER-NAME]", user_name)
+    msg = msg.replace("[BOT-NAME]", bot_name)  
+
+    return msg
+
 def pick_activity():
     '''
     Returns a random activity from the Discord.json file.
