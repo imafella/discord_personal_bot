@@ -4,6 +4,9 @@ from zoneinfo import ZoneInfo
 import os, traceback
 from dotenv import load_dotenv
 import argparse
+import random
+from Utils import General_Utils as utility
+from Utils import Responses as responses
 
 
 #
@@ -11,8 +14,7 @@ import argparse
 #
 intents = discord.Intents.all()
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-Test_TOKEN = os.getenv("DISCORD_TESTING_TOKEN")
+TOKEN = os.getenv("discord_token")
 admins = json.loads(os.getenv("ALLOWED_ADMINS","[]"))
 ignore_these_user_msgs = json.loads(os.getenv("ignore_user_msgs", "[]"))
 ignore_these_user_reactions = json.loads(os.getenv("ignore_user_reactions", "[]"))
@@ -72,9 +74,9 @@ async def has_sent_message_today(channel: discord.TextChannel, search_string: st
 async def change_presense_periodically():
 	await client.wait_until_ready()
 	while not client.is_closed():
-		bot_activity = discord.Game(name=pickRandomActivity())
+		bot_activity = discord.Game(name=responses.pick_activity())
 		await client.change_presence(activity=bot_activity, status=discord.Status.online)
-		print(f"Changed presence to: Playing{bot_activity.name}")
+		print(f"Changed presence to: {bot_activity.name}")
 		await asyncio.sleep(13 * 60 * 60)  # Change every 13 hours
 
 async def change_avatar_periodically():
@@ -113,21 +115,18 @@ async def on_error(event, *args, **kwargs):
 # General Commands
 #
 
-@command_tree.command(name="flip",description="Flips the table")
-async def flip(interaction: discord.Interaction):
-	database.incriment_bot_usage(guild_id=interaction.guild.id, user_id=interaction.user.id)
-	await interaction.response.send_message(content=tblFlip())
 
 @command_tree.command(name="info",description="Info about the bot.")
-async def info(interaction: discord.Interaction):
-	database.incriment_bot_usage(guild_id=interaction.guild.id, user_id=interaction.user.id)
-	await interaction.response.send_message(content=giveInfo())
+async def info(self, interaction: discord.Interaction):
+	msg = ""
+	for command in self.commands:
+		msg+= f"\n\n/{command.name} - {command.description}"
+	await interaction.response.send_message(content=msg)
 
 @command_tree.command(name="good_bot",description="Tell the bot it's a good bot.")
 async def good_bot(interaction: discord.Interaction):
-	database.incriment_bot_usage(guild_id=interaction.guild.id, user_id=interaction.user.id)
 	username = interaction.user.mention
-	await interaction.response.send_message(content=pickRandomGoodBotResponse(username))
+	await interaction.response.send_message(content=responses.pick_good_bot_msg(username, os.getenv("bot_name", "A Robot")))
 
 
 @command_tree.command(name="test",description="Testing the latest code changes that imafella is working on. Don't call this.")
@@ -135,18 +134,17 @@ async def test(interaction: discord.Interaction):
 	"""
 	Test command to check if the bot is working.
 	"""
-	database.incriment_bot_usage(guild_id=interaction.guild.id, user_id=interaction.user.id)
 	username = interaction.user.mention
 	interaction.response.defer()  # Deferring the response to allow for longer processing time
 	
 
 	await interaction.followup.send(content=f"{username}, this is a test command. The bot is working!")
 
-parser = argparse.ArgumentParser(description="Run Imabot")
-parser.add_argument('--test', action='store_true', help="Run Imabot in test mode using the test token")
+parser = argparse.ArgumentParser(description="Run Bot")
+parser.add_argument('--test', action='store_true', help="Run Bot in test mode using the test token")
 args = parser.parse_args()
 
 # Decide which token to use
-selected_token = Test_TOKEN if args.test else TOKEN
+selected_token = TOKEN
 #Runs the bot		
 client.run(selected_token)
