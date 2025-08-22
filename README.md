@@ -2,9 +2,10 @@
 Bot that will host uses that are more focused on me and less on the bank.
 
 ## To run:
-pipenv shell
-pipenv sync
-pipenv run python run_bot.py
+- Populate your own .env file based on the .env_template
+- pipenv shell
+- pipenv sync
+- pipenv run python run_bot.py
 
 ## Other Scripts
 ### Env_Template_Maker
