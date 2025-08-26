@@ -100,8 +100,10 @@ async def on_ready():
 	'''
 	Starts the whole application
 	'''
+	life_game = Life(bot=client, database=db_connection)
 	try:
-		command_tree.add_command(Life(bot=client, database=db_connection))  # Add the Life command group
+
+		command_tree.add_command(life_game)  # Add the Life command group
 		synced_commands = await command_tree.sync()
 
 		print(f"Synced {len(synced_commands)} commands.")
@@ -116,6 +118,7 @@ async def on_ready():
 	print("Hello, I am online!")
 	print('Connected to bot: {}'.format(client.user.name))
 	print('Bot ID: {}'.format(client.user.id))
+	await life_game.start_daily_life_increase_task()
 
 @client.event
 async def on_error(event, *args, **kwargs):

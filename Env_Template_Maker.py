@@ -15,3 +15,4 @@ with open(env_path, "r") as env_file:
 with open(template_path, "w") as template_file:
     for line in lines:
         template_file.write(blank_env_values(line))
+    print(f"\n\nTemplate created at {template_path} with blank values.")

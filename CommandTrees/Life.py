@@ -1,4 +1,4 @@
-import discord, json, random, os
+import discord, json, random, os, asyncio
 from dotenv import load_dotenv
 from Connections.DB_Connection import DatabaseConnection
 from discord.ext import tasks
@@ -12,35 +12,38 @@ class Life(discord.app_commands.Group):
         self.target_user = int(os.getenv("life_target_user"), 0)
         self.total = self.database.get_life_total(user_id=self.target_user)
         super().__init__(name="life", description="Life Commands") 
-        # self.daily_life_increase.start()
-    
-    def cog_unload(self):
-        self.daily_life_increase.cancel()
+        self.tasks = {}
 
     
-    @tasks.loop(hours=1)
+
     async def daily_life_increase(self):
-        now = datetime.now()
-        target_time = time(7, 0)  # 7:00 AM
-        # If it's 7am (within the current minute)
-        if now.time().hour == target_time.hour:
-            self.total += 1
-            hearts = "❤️" * self.total
-            # Fetch the target user and send a message
-            target_user = await self.bot.fetch_user(self.target_user)
-            await target_user.send(
-                        content=f"Good morning! Your life total has increased by 1. Total: {hearts}"
-                    )
-            for user in self.admins:
-                admin_user = await self.bot.fetch_user(user)
-                await admin_user.send(
-                    content=f"Life total for {target_user.name} has been increased to {self.total}."
-                )
 
-    @daily_life_increase.before_loop
-    async def before_daily_life_increase(self):
         await self.bot.wait_until_ready()
-        self.daily_life_increase.start()
+        while not self.bot.is_closed():
+            print("Checking for daily life increase...")
+            now = datetime.now()
+            target_time = time(7, 0)  # 7:00 AM
+            # If it's 7am (within the current minute)
+            if now.time().hour == target_time.hour:
+                self.total += 1
+                hearts = "❤️" * self.total
+                # Fetch the target user and send a message
+                target_user = await self.bot.fetch_user(self.target_user)
+                await target_user.send(
+                            content=f"Good morning! Your life total has increased by 1. Total: {hearts}"
+                        )
+                for user in self.admins:
+                    admin_user = await self.bot.fetch_user(user)
+                    await admin_user.send(
+                        content=f"Life total for {target_user.name} has been increased to {self.total}."
+                    )  
+            await asyncio.sleep(60*60) # Check every hour
+
+
+    async def start_daily_life_increase_task(self):
+        await self.bot.wait_until_ready()
+        task = asyncio.create_task(self.daily_life_increase())
+        self.tasks['daily_life_increase'] = task
 
     @discord.app_commands.command(name="increase", description="Increase Life total by 1.")
     async def increase(self, interaction: discord.Interaction, reason:str=None, amount:int=1):
