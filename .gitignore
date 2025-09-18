@@ -211,3 +211,4 @@ Pipfile.lock
 lore_data.db
 lore.db
 Connections/query.sql
+all_ids.txt

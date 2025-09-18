@@ -8,6 +8,7 @@ import random
 from Utils import General_Utils as utility
 from Utils import Responses as responses
 from CommandTrees.Life import Life
+from CommandTrees.ToDo import Todo
 from Connections.DB_Connection import DatabaseConnection
 
 
@@ -101,9 +102,11 @@ async def on_ready():
 	Starts the whole application
 	'''
 	life_game = Life(bot=client, database=db_connection)
+	todo_list = Todo(bot=client, database=db_connection)
 	try:
 
 		command_tree.add_command(life_game)  # Add the Life command group
+		command_tree.add_command(todo_list)  # Add the Todo command group
 		synced_commands = await command_tree.sync()
 
 		print(f"Synced {len(synced_commands)} commands.")
@@ -119,6 +122,9 @@ async def on_ready():
 	print('Connected to bot: {}'.format(client.user.name))
 	print('Bot ID: {}'.format(client.user.id))
 	await life_game.start_daily_life_increase_task()
+	print("Life is running!")
+	await todo_list.start_reminders()
+	print("Reminders are running!")
 
 @client.event
 async def on_error(event, *args, **kwargs):
